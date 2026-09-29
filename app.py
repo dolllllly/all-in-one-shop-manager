@@ -32,7 +32,6 @@ SHOP_COLORS = {
     "Electronics": "#9333ea"
 }
 
-
 # =========================================================
 # SESSION STATE
 # =========================================================
@@ -42,7 +41,6 @@ if "logged_in" not in st.session_state:
 
 if "selected_shop_card" not in st.session_state:
     st.session_state["selected_shop_card"] = None
-
 
 # =========================================================
 # CUSTOM CSS
@@ -269,7 +267,6 @@ h1, h2, h3, h4 {
 </style>
 """, unsafe_allow_html=True)
 
-
 # =========================================================
 # DESIGN HELPERS
 # =========================================================
@@ -310,6 +307,11 @@ def format_date(value):
 
     except (ValueError, TypeError, AttributeError):
         return str(value)
+
+
+def display_quantity(value):
+    """Display a dash when quantity is empty or NULL."""
+    return value.strip() if value and value.strip() else "—"
 
 
 # =========================================================
@@ -580,7 +582,7 @@ if selected_card_shop:
 
                 with quantity_col:
                     st.markdown("**Quantity**")
-                    st.write(item["quantity"])
+                    st.write(display_quantity(item.get("quantity")))
 
                 with priority_col:
                     st.markdown("**Priority**")
@@ -643,7 +645,7 @@ with st.form("add_product", clear_on_submit=True):
         )
 
         quantity = st.text_input(
-            "🔢 Quantity",
+            "🔢 Quantity (optional)",
             placeholder="e.g. 5 kg, 12 pieces, 2 boxes"
         )
 
@@ -664,10 +666,8 @@ with st.form("add_product", clear_on_submit=True):
 
     if submitted:
 
-        if not product.strip() or not quantity.strip():
-            st.warning(
-                "Please enter both the product name and quantity."
-            )
+        if not product.strip():
+            st.warning("Please enter the product name.")
 
         else:
 
@@ -675,7 +675,7 @@ with st.form("add_product", clear_on_submit=True):
                 add_item({
                     "shop": shop,
                     "product": product.strip(),
-                    "quantity": quantity.strip(),
+                    "quantity": quantity.strip() or None,
                     "priority": priority,
                     "added_by": added_by,
                     "notes": notes.strip(),
@@ -752,7 +752,7 @@ for item in filtered_items:
 
         with info1:
             st.markdown("**📦 Quantity**")
-            st.write(item["quantity"])
+            st.write(display_quantity(item.get("quantity")))
 
         with info2:
             st.markdown("**🚦 Priority**")
@@ -789,8 +789,8 @@ for item in filtered_items:
             )
 
             new_quantity = st.text_input(
-                "Quantity",
-                value=item["quantity"],
+                "Quantity (optional)",
+                value=item.get("quantity") or "",
                 key=f"qty_{item['id']}"
             )
 
@@ -814,17 +814,15 @@ for item in filtered_items:
 
             if save:
 
-                if not new_product.strip() or not new_quantity.strip():
-                    st.warning(
-                        "Product name and quantity are required."
-                    )
+                if not new_product.strip():
+                    st.warning("Please enter the product name.")
 
                 else:
 
                     try:
                         update_item(item["id"], {
                             "product": new_product.strip(),
-                            "quantity": new_quantity.strip(),
+                            "quantity": new_quantity.strip() or None,
                             "priority": new_priority,
                             "notes": new_notes.strip()
                         })
@@ -989,7 +987,7 @@ with st.expander("📚 Open Shopping History", expanded=False):
                     with col1:
 
                         st.markdown("**📦 Quantity**")
-                        st.write(item.get("quantity", "—"))
+                        st.write(display_quantity(item.get("quantity")))
 
                         st.markdown("**🚦 Priority**")
                         st.write(item.get("priority", "—"))
@@ -1044,7 +1042,7 @@ with st.expander("📚 Open Shopping History", expanded=False):
                 writer.writerow({
                     "Product": item.get("product", ""),
                     "Shop": item.get("shop", ""),
-                    "Quantity": item.get("quantity", ""),
+                    "Quantity": item.get("quantity") or "",
                     "Priority": item.get("priority", ""),
                     "Added By": item.get("added_by", ""),
                     "Status": item.get("status", ""),
